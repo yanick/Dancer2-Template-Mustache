@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 {
     package MyApp;
 
-    use Dancer ':syntax';
+    use Dancer2;
 
     set views => 't/views';
     set layout => 'face';
@@ -25,11 +25,10 @@ use Test::More tests => 1;
     };
 }
 
-use Dancer::Test;
+use Test::WWW::Mechanize::PSGI; 
 
-response_content_like [ GET => '/style/fu_manchu' ], 
-    qr/Manly \s+ fu_manchu \s+ mustache \s+ you \s+ have \s+ there/x, 
-    "layout";
+my $mech = Test::WWW::Mechanize::PSGI->new( app => MyApp->to_app );
 
-
+$mech->get_ok( '/style/fu_manchu' );
+$mech->content_contains( "Manly fu_manchu mustache \n you have there" ); 
 

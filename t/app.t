@@ -1,12 +1,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 7;
+use Test::WWW::Mechanize::PSGI; 
 
 {
     package MyApp;
 
-    use Dancer ':syntax';
+    use Dancer2;
 
     set views => 't/views';
 
@@ -35,19 +36,14 @@ use Test::More tests => 4;
     };
 }
 
-use Dancer::Test;
+my $mech = Test::WWW::Mechanize::PSGI->new( app => MyApp->to_app );
 
-response_content_like [ GET => '/' ], qr/Welcome manly mustached man/, 
-    "template file found";
+$mech->get_ok( '/' );
+$mech->content_contains( 'Welcome manly mustached man' );
+$mech->content_lacks( 'Nice', 'undef section' );
 
-response_content_unlike [ GET => '/' ], qr/Nice/, 
-    "section with undef => not shown";
+$mech->get_ok( '/style/pencil' );
+$mech->content_contains( 'Nice pencil mustache', 'interpolation and section' );
 
-response_content_like [ GET => '/style/pencil' ], qr/Nice pencil mustache/, 
-    "interpolation and section";
-
-response_content_like [ GET => '/partial' ], qr/:\}\)=/, 
-    "partials work";
-
-
-
+$mech->get_ok( '/partial' );
+$mech->content_contains( ':})=', 'partials work' );
